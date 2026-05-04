@@ -10,9 +10,6 @@
 //  Space complexity: O(m)  for the LPS array
 // ─────────────────────────────────────────────
 
-// Step 1 — build LPS (Longest Prefix Suffix) array
-// lps[i] = length of longest proper prefix of pattern[0..i]
-//          that is also a suffix
 std::vector<int> build_lps(const std::string& pattern) {
     int m = pattern.size();
     std::vector<int> lps(m, 0);
@@ -20,11 +17,13 @@ std::vector<int> build_lps(const std::string& pattern) {
 
     while (i < m) {
         if (pattern[i] == pattern[len]) {
-            lps[i++] = ++len;
+            lps[i] = ++len;
+            i++;
         } else if (len != 0) {
-            len = lps[len - 1];   // don't increment i
+            len = lps[len - 1];
         } else {
-            lps[i++] = 0;
+            lps[i] = 0;
+            i++;
         }
     }
     return lps;
@@ -35,20 +34,19 @@ MatchResult kmp_search(const std::string& text, const std::string& pattern) {
     auto start = std::chrono::high_resolution_clock::now();
 
     int n = text.size(), m = pattern.size();
-    if (m == 0 || m > n) { result.time_ms = measure_ms(start); return result; }
+    std::vector<int> lps = build_lps(pattern);
 
-    auto lps = build_lps(pattern);
     int i = 0, j = 0;
-
     while (i < n) {
-        if (text[i] == pattern[j]) { i++; j++; }
-
+        if (text[i] == pattern[j]) {
+            i++; j++;
+        }
         if (j == m) {
             result.positions.push_back(i - j);
-            j = lps[j - 1];          // keep searching
+            j = lps[j - 1];
         } else if (i < n && text[i] != pattern[j]) {
             if (j != 0) j = lps[j - 1];
-            else        i++;
+            else i++;
         }
     }
 
